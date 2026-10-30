@@ -13,8 +13,8 @@ Work top to bottom. Items marked (once) never need repeating. Everything else re
 ## 1. Domain and web (once)
 
 - [ ] Buy the domain (Cloudflare Registrar or Namecheap; about $12/yr for `.app`, which forces HTTPS, a plus).
-- [ ] Point it at Vercel: add the domain in the Vercel project, create the `A`/`CNAME` records it shows, wait for the certificate.
-- [ ] Set `APP_URL=https://snapschedule.app` in Vercel so emailed links and `.ics` feeds use the real host.
+- [ ] Point it at Render: Settings -> Custom Domains in the Render service, create the `CNAME`/`ALIAS` records it shows, wait for the certificate.
+- [ ] Set `APP_URL=https://snapschedule.app` in the Render service Environment tab so emailed links and `.ics` feeds use the real host.
 - [ ] Verify the sending domain in Resend and set `EMAIL_FROM` (for example `Snap Schedule <hello@snapschedule.app>`).
 
 ## 2. Apple (once)
@@ -36,7 +36,7 @@ Work top to bottom. Items marked (once) never need repeating. Everything else re
 - [ ] App Store Connect: Subscriptions, create group "Snap Schedule Pro"; products `pro_monthly` and `pro_yearly` with prices (suggested $3.99/mo and $24.99/yr), localized names and descriptions, review screenshot (any screenshot of the Upgrade screen).
 - [ ] Play Console: Monetize, Subscriptions, same product ids `pro_monthly` / `pro_yearly`, base plans monthly and yearly.
 - [ ] RevenueCat: create project, add iOS and Android apps (App Store Connect API key / Play service-account JSON), entitlement `pro`, offering `default` with both packages.
-- [ ] RevenueCat: Integrations, Webhooks, URL `https://snapschedule.app/api/webhooks/revenuecat`, Authorization header value = `REVENUECAT_WEBHOOK_SECRET` from Vercel. Send a test event and confirm the web app flips the plan.
+- [ ] RevenueCat: Integrations, Webhooks, URL `https://snapschedule.app/api/webhooks/revenuecat`, Authorization header value = `REVENUECAT_WEBHOOK_SECRET` from the Render environment. Send a test event and confirm the web app flips the plan.
 - [ ] Install `@revenuecat/purchases-capacitor` in the shell and wire the Upgrade buttons (see the shell README).
 - [ ] Test with a sandbox Apple account and a Play license tester before submitting.
 
@@ -64,6 +64,6 @@ Work top to bottom. Items marked (once) never need repeating. Everything else re
 ## 8. After launch (ongoing)
 
 - [ ] Anthropic console: set a monthly spend limit (Settings, Limits) at an amount you're comfortable with (a few dollars covers thousands of snaps at launch) and an email alert at 50%.
-- [ ] Watch Vercel function duration and errors, Turso row counts (free tier limits), and Resend bounce rate.
+- [ ] Watch Render service logs and response times, Turso row counts (free tier limits), and Resend bounce rate.
 - [ ] Reply to every store review in the first month; it visibly lifts ranking.
 - [ ] Each web deploy ships to phones immediately. Only rebuild the native app when a plugin, permission string, icon, or the server URL changes.

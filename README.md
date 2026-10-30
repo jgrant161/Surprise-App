@@ -46,9 +46,10 @@ realistic sample output so every screen is clickable.
 
 ## Deploying cheaply
 
-Both apps are built to deploy on Vercel's free/hobby tier with a Turso (hosted SQLite) database,
-also free at this scale. Set `DATABASE_URL`, `DATABASE_AUTH_TOKEN` and `ANTHROPIC_API_KEY` in
-the project's environment variables and run `npm run db:push` once against the hosted database.
+Snap Schedule is set up for Render (a `render.yaml` blueprint is at the repo root, Starter
+plan at $7/mo) with a Turso hosted-SQLite database and Resend for sign-in emails, both free
+at this scale. Full steps in `docs/DEPLOY.md`; store submission steps in
+`docs/store/RELEASE_CHECKLIST.md`. The iOS/Android shell lives in `apps/snap-schedule-native`.
 
 ## Roadmap (shared)
 

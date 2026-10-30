@@ -1,8 +1,9 @@
 # Deploying the Snap Schedule web app
 
 The web app (`apps/snap-schedule`) is what users and the native shell actually load. This
-guide gets it to production on free tiers: Vercel for hosting, Turso for the database,
-Resend for sign-in emails, Anthropic for extraction.
+guide gets it to production cheaply: Render for hosting (you already have an account),
+Turso for the database, Resend for sign-in emails, Anthropic for extraction. Vercel is
+covered as an alternative at the end of section 3.
 
 ## 1. Database: Turso
 
@@ -21,7 +22,7 @@ Resend for sign-in emails, Anthropic for extraction.
 4. Optional: seed the review family the same way with `npm run db:seed`.
 
 Images are stored as blobs in this database for v1. Turso's free tier (several GB) covers a
-long time at launch; move images to Vercel Blob or S3 when the table passes a gigabyte.
+long time at launch; move images to S3 or Cloudflare R2 when the table passes a gigabyte.
 
 ## 2. Email: Resend
 
@@ -30,15 +31,14 @@ long time at launch; move images to Vercel Blob or S3 when the table passes a gi
 3. `EMAIL_FROM` must use the verified domain, for example `Snap Schedule <hello@snapschedule.app>`.
 4. Until the domain is verified you can send only to your own address; good enough for testing.
 
-## 3. Hosting: Vercel
+## 3. Hosting: Render (recommended)
 
-1. vercel.com, Add New Project, import the GitHub repo.
-2. Settings that matter:
-   - Root Directory: `apps/snap-schedule`
-   - Framework Preset: Next.js (auto-detected)
-   - Node.js Version: 22.x
-   - Build command and output: leave defaults (`next build`).
-3. Environment variables (Production, and Preview if you want preview deploys to work):
+The repo ships a `render.yaml` Blueprint at the root, so the service, plan, health check and
+environment variable names are all predefined.
+
+1. In the Render dashboard: **New -> Blueprint**, connect the GitHub repo, pick the branch.
+   Render reads `render.yaml` and shows one service, `snap-schedule`.
+2. It prompts for the secrets marked `sync: false`. Paste these:
 
    | Variable | Value | Notes |
    |---|---|---|
@@ -46,27 +46,37 @@ long time at launch; move images to Vercel Blob or S3 when the table passes a gi
    | `DATABASE_URL` | `libsql://...turso.io` | From step 1 |
    | `DATABASE_AUTH_TOKEN` | token | From step 1 |
    | `RESEND_API_KEY` | `re_...` | From step 2 |
-   | `EMAIL_FROM` | `Snap Schedule <hello@yourdomain>` | Verified domain only |
-   | `APP_URL` | `https://snapschedule.app` | Used in emails, `.ics` feed URLs, redirects |
-   | `SUPPORT_EMAIL` | `support@yourdomain` | Shown in the app and store listing |
    | `REVIEW_EMAIL` | `review@yourdomain` | Demo login for App Review; this address accepts the fixed code |
    | `REVIEW_CODE` | 6 digits | The fixed code for `REVIEW_EMAIL` |
-   | `FREE_SNAPS_PER_MONTH` | `5` | Free tier limit |
-   | `PRO_PRICE_MONTHLY` | `3.99` | Display only; real prices live in the stores |
-   | `PRO_PRICE_YEARLY` | `24.99` | Display only |
    | `REVENUECAT_WEBHOOK_SECRET` | long random string | Must match the Authorization header configured in RevenueCat |
 
-4. Deploy. The first deploy takes a few minutes; later ones about a minute.
-5. Domains: add `snapschedule.app` (and `www`), create the DNS records Vercel lists at your registrar, wait for the certificate.
+   The non-secret ones (`APP_URL`, `EMAIL_FROM`, `SUPPORT_EMAIL`, prices, free limit) are
+   pre-filled in the blueprint; edit them in the service's Environment tab to match your domain.
+3. Click **Apply**. The first build takes 3-5 minutes. The service is healthy when
+   `https://<service>.onrender.com/api/health` returns `{"ok":true}`.
+4. Custom domain: service **Settings -> Custom Domains -> Add**, enter `snapschedule.app`
+   and `www.snapschedule.app`, create the CNAME/ALIAS records it shows at your registrar.
+   Render issues the certificate automatically. Then set `APP_URL` to the final domain.
+5. Auto-deploy is on: every push to the connected branch redeploys. Turn it off in Settings
+   if you prefer to click Deploy manually.
 
-Function limits: image extraction can take 10-30 seconds. On the Hobby plan the default
-function timeout is 60 seconds on Node 22 with Fluid compute, which is enough. The upload
-route already sets `maxDuration`; keep it at or below the plan limit.
+Plan: `starter` ($7/mo) is in the blueprint on purpose. The free plan sleeps after 15 minutes
+of inactivity and takes 30+ seconds to wake, which fails App Review's first tap and annoys
+users. Starter has no sleep and a 60s request timeout, enough for the 10-30s extraction call.
+Render allows commercial use on all plans.
+
+### Alternative: Vercel
+
+Vercel works too, with one catch: the free Hobby plan is for non-commercial use, so a paid
+app needs Pro at $20/mo. Import the repo, set Root Directory `apps/snap-schedule`, Node 22,
+and the same environment variables as above. Image extraction can take 10-30 seconds; the
+upload route sets `maxDuration`, keep it at or below your plan's function limit.
 
 ## 4. Staging
 
-Create a second Vercel project from the same repo (or use the Preview environment) with its
-own Turso database (`turso db create snap-schedule-staging`) and the same variables. Point
+Create a second Render web service from the same repo (duplicate the blueprint service with
+a different name, or New -> Web Service pointed at a `staging` branch) with its own Turso
+database (`turso db create snap-schedule-staging`) and the same variables. Point
 the native shell at it with `SNAP_SCHEDULE_URL=https://staging.snapschedule.app npx cap sync`
 when testing a native build against unreleased web changes.
 
@@ -85,14 +95,14 @@ column, deploy code that writes both, backfill, then drop the old one in a later
 ## 6. Continuous integration
 
 `.github/workflows/ci.yml` runs lint, tests, and a production build for both apps on every
-push and pull request. Vercel deploys independently on push to `main` (production) and on
-every branch (preview). Keep the GitHub check green before merging.
+push and pull request. Render deploys independently on push to the connected branch. Keep
+the GitHub check green before merging.
 
 ## 7. What it costs
 
 | Service | Free tier | When you'd pay |
 |---|---|---|
-| Vercel Hobby | free, non-commercial use | Pro at $20/mo once you charge users (Vercel's terms) |
+| Render Starter | none (free plan sleeps) | $7/mo flat; commercial use allowed |
 | Turso | free: 500 DBs, 9 GB storage, 1 billion row reads/mo | Rarely at this scale |
 | Resend | free: 3,000 emails/mo, 100/day | $20/mo above that |
 | Anthropic | pay per token | See below |
