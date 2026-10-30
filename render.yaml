@@ -1,0 +1,44 @@
+# Render Blueprint for the Snap Schedule web app.
+# In Render: New -> Blueprint -> pick this repo. Fill in the sync:false secrets when prompted.
+services:
+  - type: web
+    name: snap-schedule
+    runtime: node
+    plan: starter            # $7/mo. Avoid "free": it sleeps, and App Review will hit cold starts.
+    region: ohio
+    rootDir: apps/snap-schedule
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: APP_URL
+        value: https://snapschedule.app        # change to your domain
+      - key: SUPPORT_EMAIL
+        value: support@snapschedule.app
+      - key: EMAIL_FROM
+        value: "Snap Schedule <login@snapschedule.app>"
+      - key: FREE_SNAPS_PER_MONTH
+        value: "5"
+      - key: PRO_PRICE_MONTHLY
+        value: "$3.99"
+      - key: PRO_PRICE_YEARLY
+        value: "$24.99"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: DATABASE_URL            # libsql://<db>.turso.io
+        sync: false
+      - key: DATABASE_AUTH_TOKEN
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: REVIEW_EMAIL            # App Review demo login
+        sync: false
+      - key: REVIEW_CODE
+        sync: false
+      - key: REVENUECAT_WEBHOOK_SECRET
+        sync: false

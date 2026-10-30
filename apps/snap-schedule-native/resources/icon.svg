@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" rx="225.28" fill="#4F46E5"/>
+  <g fill="none" stroke="#fff" stroke-width="54" stroke-linejoin="round" stroke-linecap="round">
+    <!-- camera body -->
+    <path d="M200 372h118l52-78h284l52 78h118a60 60 0 0 1 60 60v300a60 60 0 0 1-60 60H200a60 60 0 0 1-60-60V432a60 60 0 0 1 60-60z"/>
+    <!-- lens -->
+    <circle cx="512" cy="574" r="150"/>
+  </g>
+  <!-- calendar page inside the lens -->
+  <g>
+    <rect x="442" y="512" width="140" height="124" rx="18" fill="#fff"/>
+    <rect x="442" y="512" width="140" height="34" rx="18" fill="#4F46E5" opacity=".28"/>
+    <rect x="462" y="562" width="24" height="24" rx="5" fill="#4F46E5"/>
+    <rect x="500" y="562" width="24" height="24" rx="5" fill="#4F46E5"/>
+    <rect x="538" y="562" width="24" height="24" rx="5" fill="#4F46E5"/>
+    <rect x="462" y="598" width="24" height="24" rx="5" fill="#4F46E5"/>
+    <rect x="500" y="598" width="24" height="24" rx="5" fill="#4F46E5" opacity=".45"/>
+  </g>
+  <!-- flash dot -->
+  <circle cx="752" cy="452" r="26" fill="#fff"/>
+</svg>
