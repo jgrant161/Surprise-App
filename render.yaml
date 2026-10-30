@@ -1,12 +1,12 @@
-# Render Blueprint for the Snap Schedule web app.
+# Render Blueprint for the FlyerCal web app.
 # In Render: New -> Blueprint -> pick this repo. Fill in the sync:false secrets when prompted.
 services:
   - type: web
-    name: snap-schedule
+    name: flyercal
     runtime: node
     plan: starter            # $7/mo. Avoid "free": it sleeps, and App Review will hit cold starts.
     region: ohio
-    rootDir: apps/snap-schedule
+    rootDir: apps/flyercal
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
@@ -17,11 +17,11 @@ services:
       - key: NODE_ENV
         value: production
       - key: APP_URL
-        value: https://snapschedule.app        # change to your domain
+        value: https://flyercal.app        # change to your domain
       - key: SUPPORT_EMAIL
-        value: support@snapschedule.app
+        value: support@flyercal.app
       - key: EMAIL_FROM
-        value: "Snap Schedule <login@snapschedule.app>"
+        value: "FlyerCal <login@flyercal.app>"
       - key: FREE_SNAPS_PER_MONTH
         value: "5"
       - key: PRO_PRICE_MONTHLY

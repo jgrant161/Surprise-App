@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>FlyerCal</title>
+  <style>
+    :root { color-scheme: light; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+      background: #4F46E5; color: #fff;
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      padding: env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
+    }
+    .card { max-width: 320px; }
+    .glyph { font-size: 56px; margin-bottom: 16px; }
+    h1 { font-size: 22px; margin: 0 0 8px; }
+    p { font-size: 16px; line-height: 1.4; opacity: .9; margin: 0 0 24px; }
+    button {
+      font: inherit; font-weight: 600; font-size: 17px;
+      background: #fff; color: #4F46E5; border: 0; border-radius: 12px;
+      padding: 14px 28px; min-width: 160px;
+    }
+    button:active { opacity: .85; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="glyph">📸</div>
+    <h1>FlyerCal needs an internet connection.</h1>
+    <p>Reconnect and try again to see your family calendar.</p>
+    <button id="retry" type="button">Retry</button>
+  </div>
+  <script>
+    // The shell loads the hosted app from capacitor.config.ts `server.url`. This page is only
+    // shown when that load fails. Retry sends the WebView back to the live site.
+    var SERVER_URL = "https://flyercal.app";
+    document.getElementById("retry").addEventListener("click", function () {
+      window.location.href = SERVER_URL;
+    });
+    window.addEventListener("online", function () { window.location.href = SERVER_URL; });
+  </script>
+</body>
+</html>

@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [apps/snap-schedule, apps/gift-planner]
+        app: [apps/flyercal, apps/gift-planner]
     defaults:
       run:
         working-directory: ${{ matrix.app }}

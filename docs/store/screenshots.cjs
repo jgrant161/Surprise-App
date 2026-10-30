@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Store screenshot capture for Snap Schedule.
+ * Store screenshot capture for FlyerCal.
  *
  * Usage:
- *   node docs/store/screenshots.cjs --base https://snapschedule.app --cookie session=<value> --snap <snapId>
+ *   node docs/store/screenshots.cjs --base https://flyercal.app --cookie session=<value> --snap <snapId>
  *     [--platform ios|android|all] [--frame] [--out docs/store/screenshots]
  *
  * --cookie   name=value of a signed-in session cookie (copy from the browser dev tools).

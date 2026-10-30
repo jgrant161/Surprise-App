@@ -25,7 +25,7 @@ Apple wants 3 to 10 per device size, Google 2 to 8. The script captures five pag
 
 ```bash
 node docs/store/screenshots.cjs \
-  --base https://snapschedule.app \
+  --base https://flyercal.app \
   --cookie session=PASTE_VALUE \
   --snap PASTE_SNAP_ID \
   --frame
@@ -43,6 +43,6 @@ Playwright must be installed where you run it: `npm i -D playwright && npx playw
 - Seed the demo family with a few confirmed events first so the Home capture isn't the empty state.
 - Captions come from the `PAGES` list in the script; keep them under about 40 characters.
 - Google Play also wants a 1024 x 500 feature graphic. Make it from
-  `apps/snap-schedule-native/resources/icon.svg` on the brand color with the app name; any image
+  `apps/flyercal-native/resources/icon.svg` on the brand color with the app name; any image
   editor works.
 - The App Store "App Preview" video is optional; skip it for 1.0.
