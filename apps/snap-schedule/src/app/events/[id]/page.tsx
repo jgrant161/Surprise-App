@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getEvent, getFamily, getMembers } from "@/db/queries";
+import { getEvent, getMembers } from "@/db/queries";
+import { requireFamily } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { MemberDots } from "@/components/member-dots";
 import { datePart, formatEventTime, formatLongDate } from "@/lib/dates";
@@ -11,9 +12,9 @@ import { deleteEvent, updateEvent } from "./actions";
 export default async function EventPage({ params, searchParams }: PageProps<"/events/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
-  const event = await getEvent(id);
+  const { family } = await requireFamily();
+  const event = await getEvent(family.id, id);
   if (!event) notFound();
-  const family = await getFamily();
   const members = await getMembers(family.id);
   const editing = sp.edit === "1";
 

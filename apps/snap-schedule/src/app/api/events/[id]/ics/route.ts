@@ -1,11 +1,14 @@
-import { getEvent, getFamily } from "@/db/queries";
+import { getEvent } from "@/db/queries";
+import { getSession } from "@/lib/auth";
 import { buildCalendar } from "@/lib/ics";
 
 export async function GET(_req: Request, ctx: RouteContext<"/api/events/[id]/ics">) {
   const { id } = await ctx.params;
-  const e = await getEvent(id);
+  const session = await getSession();
+  if (!session?.family) return new Response("Not found", { status: 404 });
+  const family = session.family;
+  const e = await getEvent(family.id, id);
   if (!e) return new Response("Not found", { status: 404 });
-  const family = await getFamily();
   const body = buildCalendar(family.name, [
     {
       uid: e.id,

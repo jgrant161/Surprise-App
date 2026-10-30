@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/bottom-nav";
+import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -23,12 +24,14 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const session = await getSession();
+  const showNav = !!session?.family;
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
-        <div className="mx-auto w-full max-w-2xl flex-1 px-4 pb-24 pt-4">{children}</div>
-        <BottomNav />
+        <div className={`mx-auto w-full max-w-2xl flex-1 px-4 pt-4 ${showNav ? "pb-24" : "pb-8"}`}>{children}</div>
+        {showNav && <BottomNav />}
       </body>
     </html>
   );

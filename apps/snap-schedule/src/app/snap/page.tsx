@@ -1,15 +1,17 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { SnapForm } from "./snap-form";
-import { getFamily, getSnapsNeedingReview } from "@/db/queries";
+import { getSnapsNeedingReview } from "@/db/queries";
+import { requireFamily } from "@/lib/auth";
+import { canSnap } from "@/lib/plans";
 import { hasApiKey } from "@/lib/claude";
 import { DemoBadge } from "@/components/demo-badge";
 
 export const metadata = { title: "Snap" };
 
 export default async function SnapPage() {
-  const family = await getFamily();
-  const pending = await getSnapsNeedingReview(family.id);
+  const { family } = await requireFamily();
+  const [pending, allowance] = await Promise.all([getSnapsNeedingReview(family.id), canSnap(family)]);
   return (
     <>
       <PageHeader
@@ -17,7 +19,25 @@ export default async function SnapPage() {
         subtitle="Newsletter, team schedule, flyer or a group-chat screenshot."
         action={!hasApiKey() ? <DemoBadge /> : undefined}
       />
-      <SnapForm />
+      {allowance.ok ? (
+        <>
+          <SnapForm />
+          {allowance.limit !== null && (
+            <p className="mt-2 text-center text-xs text-muted">
+              {allowance.used} of {allowance.limit} free snaps used this month ·{" "}
+              <Link href="/upgrade" className="underline">Go unlimited</Link>
+            </p>
+          )}
+        </>
+      ) : (
+        <div className="card text-center">
+          <p className="text-4xl">🎉</p>
+          <h2 className="mt-2 text-lg font-semibold">You&apos;ve used all {allowance.limit} free snaps this month</h2>
+          <p className="mt-1 text-sm text-muted">Pro gives you unlimited snaps, one calendar feed per kid, and priority support.</p>
+          <Link href="/upgrade" className="btn-primary mt-4">See Pro</Link>
+          <p className="mt-3 text-xs text-muted">Free snaps reset on the 1st.</p>
+        </div>
+      )}
       {pending.length > 0 && (
         <section className="mt-8">
           <h2 className="mb-2 text-sm font-semibold text-muted">Waiting for review</h2>

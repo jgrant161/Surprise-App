@@ -1,9 +1,7 @@
-import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { db } from "@/db";
-import { snaps } from "@/db/schema";
-import { getFamily, getMembers, getSnapEvents } from "@/db/queries";
+import { getMembers, getSnap, getSnapEvents } from "@/db/queries";
+import { requireFamily } from "@/lib/auth";
 import { PageHeader } from "@/components/page-header";
 import { DemoBadge } from "@/components/demo-badge";
 import { EventFields } from "@/components/event-fields";
@@ -14,10 +12,10 @@ export const metadata = { title: "Review" };
 
 export default async function ReviewPage({ params }: PageProps<"/snaps/[id]/review">) {
   const { id } = await params;
-  const snap = await db.query.snaps.findFirst({ where: eq(snaps.id, id), columns: { image: false } });
-  if (!snap) notFound();
-  const family = await getFamily();
-  const [members, drafts] = await Promise.all([getMembers(family.id), getSnapEvents(id)]);
+  const { family } = await requireFamily();
+  const snap = await getSnap(family.id, id);
+  if (!snap || snap.status === "discarded") notFound();
+  const [members, drafts] = await Promise.all([getMembers(family.id), getSnapEvents(family.id, id)]);
   const raw = snap.rawJson ? (JSON.parse(snap.rawJson) as { warnings?: string[] }) : null;
   const pending = drafts.filter((d) => d.status === "draft");
 
@@ -52,8 +50,12 @@ export default async function ReviewPage({ params }: PageProps<"/snaps/[id]/revi
           {snap.kind === "image" ? "📷 Source photo" : "📝 Source text"} · {snap.sourceLabel}
         </summary>
         {snap.kind === "image" ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/api/snaps/${snap.id}/image`} alt="Snapped schedule" className="mt-3 max-h-96 w-full rounded-lg object-contain bg-black/5" />
+          snap.imageDeletedAt ? (
+            <p className="mt-3 text-sm text-muted">The photo was deleted after processing. Only the extracted events are kept.</p>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`/api/snaps/${snap.id}/image`} alt="Snapped schedule" className="mt-3 max-h-96 w-full rounded-lg object-contain bg-black/5" />
+          )
         ) : (
           <pre className="mt-3 whitespace-pre-wrap text-sm text-muted">{snap.text}</pre>
         )}

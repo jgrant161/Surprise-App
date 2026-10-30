@@ -3,17 +3,25 @@ import { db } from "./index";
 import { events, eventMembers, families, members, snaps, type Event, type Member } from "./schema";
 import { localNow, addDays, toDateKey } from "@/lib/dates";
 
-export async function getFamily() {
-  const existing = await db.query.families.findFirst();
-  if (existing) return existing;
-  const id = crypto.randomUUID();
-  await db.insert(families).values({
-    id,
-    name: "My Family",
-    timezone: "America/New_York",
-    createdAt: new Date().toISOString(),
-  });
-  return (await db.query.families.findFirst({ where: eq(families.id, id) }))!;
+export async function getFamilyById(id: string) {
+  return (await db.query.families.findFirst({ where: eq(families.id, id) })) ?? null;
+}
+
+export async function getFamilyByFeedToken(token: string) {
+  if (!/^[a-f0-9]{64}$/.test(token)) return null;
+  return (await db.query.families.findFirst({ where: eq(families.feedToken, token) })) ?? null;
+}
+
+/** A snap that belongs to the family, without the image bytes. */
+export async function getSnap(familyId: string, id: string) {
+  return (
+    (await db.query.snaps.findFirst({ where: and(eq(snaps.id, id), eq(snaps.familyId, familyId)), columns: { image: false } })) ?? null
+  );
+}
+
+/** A snap with image bytes, for extraction and the image route. */
+export async function getSnapWithImage(familyId: string, id: string) {
+  return (await db.query.snaps.findFirst({ where: and(eq(snaps.id, id), eq(snaps.familyId, familyId)) })) ?? null;
 }
 
 export async function getMembers(familyId: string): Promise<Member[]> {
@@ -64,15 +72,15 @@ export async function getConfirmedEvents(familyId: string) {
   return attachPeople(rows);
 }
 
-export async function getEvent(id: string) {
-  const row = await db.query.events.findFirst({ where: eq(events.id, id) });
+export async function getEvent(familyId: string, id: string) {
+  const row = await db.query.events.findFirst({ where: and(eq(events.id, id), eq(events.familyId, familyId)) });
   if (!row) return null;
   return (await attachPeople([row]))[0];
 }
 
-export async function getSnapEvents(snapId: string) {
+export async function getSnapEvents(familyId: string, snapId: string) {
   const rows = await db.query.events.findMany({
-    where: eq(events.snapId, snapId),
+    where: and(eq(events.snapId, snapId), eq(events.familyId, familyId)),
     orderBy: [asc(events.startsAt)],
   });
   return attachPeople(rows);

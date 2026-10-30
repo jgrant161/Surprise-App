@@ -1,13 +1,28 @@
 import { NextRequest } from "next/server";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { snaps } from "@/db/schema";
-import { getFamily, getMembers } from "@/db/queries";
+import { getMembers } from "@/db/queries";
+import { getSession } from "@/lib/auth";
+import { canSnap } from "@/lib/plans";
 import { processSnap } from "@/lib/snaps";
-import { eq } from "drizzle-orm";
 
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return Response.json({ error: "Sign in first" }, { status: 401 });
+  if (!session.family) return Response.json({ error: "Create or join a family first" }, { status: 403 });
+  const family = session.family;
+
+  const allowance = await canSnap(family);
+  if (!allowance.ok) {
+    return Response.json(
+      { error: `You've used all ${allowance.limit} free snaps this month. Upgrade to Pro for unlimited snaps.`, code: "limit_reached", ...allowance },
+      { status: 402 },
+    );
+  }
+
   let form: FormData;
   try {
     form = await req.formData();
@@ -18,7 +33,6 @@ export async function POST(req: NextRequest) {
   const text = form.get("text");
   const sourceLabel = form.get("sourceLabel");
 
-  const family = await getFamily();
   const members = await getMembers(family.id);
   const id = crypto.randomUUID();
 
@@ -34,7 +48,7 @@ export async function POST(req: NextRequest) {
       kind: "image",
       imageMime: mime,
       image: Buffer.from(await image.arrayBuffer()),
-      sourceLabel: typeof sourceLabel === "string" && sourceLabel ? sourceLabel : "Photo",
+      sourceLabel: typeof sourceLabel === "string" && sourceLabel ? sourceLabel.slice(0, 80) : "Photo",
       status: "processing",
       createdAt: new Date().toISOString(),
     });

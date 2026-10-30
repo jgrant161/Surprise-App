@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { getFamily, getMembers, getSnapsNeedingReview, getUpcomingEvents } from "@/db/queries";
+import { redirect } from "next/navigation";
+import { getMembers, getSnapsNeedingReview, getUpcomingEvents } from "@/db/queries";
+import { getSession } from "@/lib/auth";
+import { maybePurgeStaleImages } from "@/lib/snaps";
+import { Landing } from "@/components/landing";
 import { localNow, toDateKey, datePart, formatDayHeading, formatEventTime } from "@/lib/dates";
 import { MemberDots } from "@/components/member-dots";
 import { PageHeader } from "@/components/page-header";
@@ -9,7 +13,11 @@ import { DemoBadge } from "@/components/demo-badge";
 export default async function Home({ searchParams }: PageProps<"/">) {
   const sp = await searchParams;
   const filter = typeof sp.member === "string" ? sp.member : null;
-  const family = await getFamily();
+  const session = await getSession();
+  if (!session) return <Landing />;
+  if (!session.family) redirect("/welcome");
+  const family = session.family;
+  await maybePurgeStaleImages();
   const [members, upcoming, pending] = await Promise.all([
     getMembers(family.id),
     getUpcomingEvents(family.id, family.timezone, 30),

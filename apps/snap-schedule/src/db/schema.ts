@@ -1,11 +1,59 @@
 import { sqliteTable, text, integer, blob, primaryKey } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  createdAt: text("created_at").notNull(),
+  lastLoginAt: text("last_login_at"),
+});
+
+export const loginCodes = sqliteTable("login_codes", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  consumedAt: text("consumed_at"),
+  createdAt: text("created_at").notNull(),
+});
+
+export const sessions = sqliteTable("sessions", {
+  id: text("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: text("created_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  userAgent: text("user_agent"),
+});
+
 export const families = sqliteTable("families", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   timezone: text("timezone").notNull().default("America/New_York"),
+  inviteCode: text("invite_code").notNull().unique(),
+  feedToken: text("feed_token").notNull().unique(),
+  plan: text("plan", { enum: ["free", "pro"] }).notNull().default("free"),
+  planSource: text("plan_source"),
+  planUpdatedAt: text("plan_updated_at"),
   createdAt: text("created_at").notNull(),
+});
+
+export const familyUsers = sqliteTable(
+  "family_users",
+  {
+    familyId: text("family_id").notNull().references(() => families.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["owner", "member"] }).notNull().default("member"),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.familyId, t.userId] })],
+);
+
+/** Tiny key/value table for housekeeping state (e.g. last image purge). */
+export const meta = sqliteTable("meta", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
 });
 
 export const members = sqliteTable("members", {
@@ -23,9 +71,10 @@ export const snaps = sqliteTable("snaps", {
   kind: text("kind", { enum: ["image", "text"] }).notNull(),
   imageMime: text("image_mime"),
   image: blob("image", { mode: "buffer" }),
+  imageDeletedAt: text("image_deleted_at"),
   text: text("text"),
   sourceLabel: text("source_label"),
-  status: text("status", { enum: ["processing", "needs_review", "confirmed", "failed"] })
+  status: text("status", { enum: ["processing", "needs_review", "confirmed", "failed", "discarded"] })
     .notNull()
     .default("processing"),
   errorMessage: text("error_message"),
@@ -67,6 +116,21 @@ export const familiesRelations = relations(families, ({ many }) => ({
   members: many(members),
   events: many(events),
   snaps: many(snaps),
+  familyUsers: many(familyUsers),
+}));
+
+export const usersRelations = relations(users, ({ many }) => ({
+  sessions: many(sessions),
+  familyUsers: many(familyUsers),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, { fields: [sessions.userId], references: [users.id] }),
+}));
+
+export const familyUsersRelations = relations(familyUsers, ({ one }) => ({
+  family: one(families, { fields: [familyUsers.familyId], references: [families.id] }),
+  user: one(users, { fields: [familyUsers.userId], references: [users.id] }),
 }));
 
 export const membersRelations = relations(members, ({ one, many }) => ({
@@ -92,6 +156,8 @@ export const eventMembersRelations = relations(eventMembers, ({ one }) => ({
 }));
 
 export type Family = typeof families.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type Session = typeof sessions.$inferSelect;
 export type Member = typeof members.$inferSelect;
 export type Snap = typeof snaps.$inferSelect;
 export type Event = typeof events.$inferSelect;

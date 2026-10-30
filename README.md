@@ -42,7 +42,9 @@ npm run dev             # snap-schedule on :3000, gift-planner on :3001
 ```
 
 Without an `ANTHROPIC_API_KEY` both apps run in **demo mode**: the Claude-powered steps return
-realistic sample output so every screen is clickable.
+realistic sample output so every screen is clickable. Snap Schedule signs you in with an
+emailed 6-digit code; without a `RESEND_API_KEY` the code is shown on the login page instead
+(dev mode). Set `REVIEW_EMAIL` and `REVIEW_CODE` for a fixed demo login (used for App Review).
 
 ## Deploying cheaply
 

@@ -1,17 +1,23 @@
-import { getFamily, getMembers } from "@/db/queries";
+import { getMembers } from "@/db/queries";
+import { requireFamily } from "@/lib/auth";
+import { listFamilyUsers } from "@/lib/families";
 import { PageHeader } from "@/components/page-header";
 import { PALETTE, TIMEZONES } from "@/lib/palette";
-import { addMember, deleteMember, updateFamily, updateMember } from "./actions";
+import { InviteCard } from "@/components/invite-card";
+import { ConfirmButton } from "@/components/confirm-button";
+import { addMember, deleteMember, leaveCurrentFamily, regenerateInvite, updateFamily, updateMember } from "./actions";
 
 export const metadata = { title: "Family" };
 
 export default async function FamilyPage() {
-  const family = await getFamily();
-  const members = await getMembers(family.id);
+  const { user, family, role } = await requireFamily();
+  const [members, people] = await Promise.all([getMembers(family.id), listFamilyUsers(family.id)]);
 
   return (
     <>
       <PageHeader title="Family" subtitle="Who shows up on the calendar, and who can drive." />
+
+      <InviteCard familyName={family.name} code={family.inviteCode} canRegenerate={role === "owner"} regenerate={regenerateInvite} />
 
       <section className="card mb-4">
         <h2 className="mb-3 text-sm font-semibold text-muted">Members</h2>
@@ -74,7 +80,7 @@ export default async function FamilyPage() {
         </form>
       </section>
 
-      <section className="card">
+      <section className="card mb-4">
         <h2 className="mb-3 text-sm font-semibold text-muted">Family settings</h2>
         <form action={updateFamily} className="flex flex-wrap items-end gap-2">
           <div className="min-w-[8rem] flex-1">
@@ -90,6 +96,27 @@ export default async function FamilyPage() {
             </select>
           </div>
           <button className="btn-secondary">Save</button>
+        </form>
+      </section>
+
+      <section className="card">
+        <h2 className="mb-3 text-sm font-semibold text-muted">Signed-in grown-ups</h2>
+        <ul className="space-y-1 text-sm">
+          {people.map((p) => (
+            <li key={p.userId} className="flex items-center justify-between">
+              <span className={p.userId === user.id ? "font-medium" : ""}>{p.email}{p.userId === user.id ? " (you)" : ""}</span>
+              <span className="text-xs uppercase tracking-wide text-muted">{p.role}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-xs text-muted">Share the invite code above so another parent can sign in and see the same calendar.</p>
+        <form action={leaveCurrentFamily} className="mt-3">
+          <ConfirmButton
+            className="btn-danger"
+            message={people.length === 1 ? "You are the only grown-up here. Leaving deletes this family and all its events. Continue?" : "Leave this family? You can rejoin with the invite code."}
+          >
+            Leave family
+          </ConfirmButton>
         </form>
       </section>
     </>
