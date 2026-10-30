@@ -33,4 +33,4 @@ export async function canSnap(family: Pick<Family, "id" | "plan">): Promise<Snap
 }
 
 export const PRO_PRICE_MONTHLY = process.env.PRO_PRICE_MONTHLY || "$3.99";
-export const PRO_PRICE_YEARLY = process.env.PRO_PRICE_YEARLY || "$24.99";
+export const PRO_PRICE_YEARLY = process.env.PRO_PRICE_YEARLY || "$39.99";

@@ -33,7 +33,7 @@ Work top to bottom. Items marked (once) never need repeating. Everything else re
 
 ## 4. RevenueCat and subscriptions (once, then per price change)
 
-- [ ] App Store Connect: Subscriptions, create group "Snap Schedule Pro"; products `pro_monthly` and `pro_yearly` with prices (suggested $3.99/mo and $24.99/yr), localized names and descriptions, review screenshot (any screenshot of the Upgrade screen).
+- [ ] App Store Connect: Subscriptions, create group "Snap Schedule Pro"; products `pro_monthly` and `pro_yearly` with prices (suggested $3.99/mo and $39.99/yr), localized names and descriptions, review screenshot (any screenshot of the Upgrade screen).
 - [ ] Play Console: Monetize, Subscriptions, same product ids `pro_monthly` / `pro_yearly`, base plans monthly and yearly.
 - [ ] RevenueCat: create project, add iOS and Android apps (App Store Connect API key / Play service-account JSON), entitlement `pro`, offering `default` with both packages.
 - [ ] RevenueCat: Integrations, Webhooks, URL `https://snapschedule.app/api/webhooks/revenuecat`, Authorization header value = `REVENUECAT_WEBHOOK_SECRET` from the Render environment. Send a test event and confirm the web app flips the plan.

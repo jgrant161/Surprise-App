@@ -29,7 +29,7 @@ export default async function UpgradePage() {
             <p className="text-xs text-muted">per month</p>
           </button>
           <button type="button" data-product="pro_yearly" className="card border-accent text-left">
-            <p className="text-xs uppercase tracking-wide text-accent">Yearly · best value</p>
+            <p className="text-xs uppercase tracking-wide text-accent">Yearly · 2 months free</p>
             <p className="mt-1 text-2xl font-semibold">{PRO_PRICE_YEARLY}</p>
             <p className="text-xs text-muted">per year</p>
           </button>

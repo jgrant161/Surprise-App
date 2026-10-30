@@ -14,7 +14,7 @@ calendar app via `.ics`.
 
 - Pain: parents retype this stuff every week. Nobody has nailed it.
 - Cost to run: a fraction of a cent per photo.
-- Business model: free for a few snaps a month, then a family plan (around $3-4/mo or $25/yr).
+- Business model: free for a few snaps a month, then a family plan ($3.99/mo or $39.99/yr, two months free).
 - Moat: the family layer (assignments, carpools, packing lists, conflicts across kids).
 
 ## 2. Surprise (`apps/gift-planner`)

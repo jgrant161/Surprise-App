@@ -27,7 +27,7 @@ services:
       - key: PRO_PRICE_MONTHLY
         value: "$3.99"
       - key: PRO_PRICE_YEARLY
-        value: "$24.99"
+        value: "$39.99"
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: DATABASE_URL            # libsql://<db>.turso.io
