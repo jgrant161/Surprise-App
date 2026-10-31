@@ -7,15 +7,15 @@ services:
     plan: starter            # $7/mo. Avoid "free": it sleeps, and App Review will hit cold starts.
     region: ohio
     rootDir: apps/flyercal
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
     autoDeployTrigger: commit
     envVars:
       - key: NODE_VERSION
         value: "22"
-      - key: NODE_ENV
-        value: production
+      # Do not set NODE_ENV here: npm would skip the dev packages the build needs.
+      # `next start` runs in production mode on its own.
       - key: APP_URL
         value: https://flyercal.app        # change to your domain
       - key: SUPPORT_EMAIL
