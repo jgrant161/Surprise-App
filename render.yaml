@@ -1,0 +1,44 @@
+# Render Blueprint for the FlyerCal web app.
+# In Render: New -> Blueprint -> pick this repo. Fill in the sync:false secrets when prompted.
+services:
+  - type: web
+    name: flyercal
+    runtime: node
+    plan: starter            # $7/mo. Avoid "free": it sleeps, and App Review will hit cold starts.
+    region: ohio
+    rootDir: apps/flyercal
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Do not set NODE_ENV here: npm would skip the dev packages the build needs.
+      # `next start` runs in production mode on its own.
+      - key: APP_URL
+        value: https://flyercal.app        # change to your domain
+      - key: SUPPORT_EMAIL
+        value: support@flyercal.app
+      - key: EMAIL_FROM
+        value: "FlyerCal <login@flyercal.app>"
+      - key: FREE_SNAPS_PER_MONTH
+        value: "5"
+      - key: PRO_PRICE_MONTHLY
+        value: "$3.99"
+      - key: PRO_PRICE_YEARLY
+        value: "$39.99"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: DATABASE_URL            # libsql://<db>.turso.io
+        sync: false
+      - key: DATABASE_AUTH_TOKEN
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: REVIEW_EMAIL            # App Review demo login
+        sync: false
+      - key: REVIEW_CODE
+        sync: false
+      - key: REVENUECAT_WEBHOOK_SECRET
+        sync: false

@@ -5,16 +5,16 @@ problem, costs almost nothing to run, and has a simple paid tier. They share a r
 of conventions (see `CONVENTIONS.md`) but nothing else, so either can ship, be sold, or be
 shut down on its own.
 
-## 1. Snap Schedule (`apps/snap-schedule`)
+## 1. FlyerCal (`apps/flyercal`)
 
 Photograph a school newsletter, a sports schedule, a flyer, or a screenshot from the parents'
 group chat. Claude reads it and turns the dates into events on the family calendar, with who's
 going, who's driving, and what to bring. Review, confirm, and export to Google Calendar or any
 calendar app via `.ics`.
 
-- Pain: parents retype this stuff every week. Nobody has nailed it.
+- Pain: parents retype this stuff every week. Single-event photo-to-calendar apps exist; none handle a whole family or a whole season.
 - Cost to run: a fraction of a cent per photo.
-- Business model: free for a few snaps a month, then a family plan (around $3-4/mo or $25/yr).
+- Business model: free for a few snaps a month, then a family plan ($3.99/mo or $39.99/yr, two months free).
 - Moat: the family layer (assignments, carpools, packing lists, conflicts across kids).
 
 ## 2. Surprise (`apps/gift-planner`)
@@ -33,22 +33,25 @@ thing, and remember what was given in past years.
 Each app is a standard Next.js project:
 
 ```bash
-cd apps/snap-schedule   # or apps/gift-planner
+cd apps/flyercal   # or apps/gift-planner
 cp .env.example .env    # add ANTHROPIC_API_KEY to leave demo mode
 npm install
 npm run db:push         # create the local SQLite database
 npm run db:seed         # demo family / household
-npm run dev             # snap-schedule on :3000, gift-planner on :3001
+npm run dev             # flyercal on :3000, gift-planner on :3001
 ```
 
 Without an `ANTHROPIC_API_KEY` both apps run in **demo mode**: the Claude-powered steps return
-realistic sample output so every screen is clickable.
+realistic sample output so every screen is clickable. FlyerCal signs you in with an
+emailed 6-digit code; without a `RESEND_API_KEY` the code is shown on the login page instead
+(dev mode). Set `REVIEW_EMAIL` and `REVIEW_CODE` for a fixed demo login (used for App Review).
 
 ## Deploying cheaply
 
-Both apps are built to deploy on Vercel's free/hobby tier with a Turso (hosted SQLite) database,
-also free at this scale. Set `DATABASE_URL`, `DATABASE_AUTH_TOKEN` and `ANTHROPIC_API_KEY` in
-the project's environment variables and run `npm run db:push` once against the hosted database.
+FlyerCal is set up for Render (a `render.yaml` blueprint is at the repo root, Starter
+plan at $7/mo) with a Turso hosted-SQLite database and Resend for sign-in emails, both free
+at this scale. Full steps in `docs/DEPLOY.md`; store submission steps in
+`docs/store/RELEASE_CHECKLIST.md`. The iOS/Android shell lives in `apps/flyercal-native`.
 
 ## Roadmap (shared)
 

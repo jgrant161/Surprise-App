@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --accent: #4f46e5;
+  --accent-foreground: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b1020;
+    --foreground: #e5e7eb;
+    --card: #141a2e;
+    --muted: #94a3b8;
+    --border: #273044;
+    --accent: #818cf8;
+    --accent-foreground: #0b1020;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.input {
+  @apply w-full rounded-lg border border-border bg-card px-3 py-2 text-base text-foreground outline-none focus:ring-2 focus:ring-accent/40;
+}
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50;
+}
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50 bg-accent text-accent-foreground hover:opacity-90;
+}
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50 border border-border bg-card text-foreground hover:bg-border/40;
+}
+.btn-danger {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40;
+}
+.card {
+  @apply rounded-xl border border-border bg-card p-4 shadow-sm;
+}
+.label {
+  @apply mb-1 block text-xs font-medium uppercase tracking-wide text-muted;
+}

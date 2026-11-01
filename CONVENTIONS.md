@@ -4,9 +4,9 @@ Two independent Next.js apps live under `apps/`. Each has its own `package.json`
 database and `.env`. Nothing is shared at the code level on purpose: either app can be
 deployed, sold or killed on its own.
 
-| | `apps/snap-schedule` | `apps/gift-planner` |
+| | `apps/flyercal` | `apps/gift-planner` |
 |---|---|---|
-| Product | Snap Schedule: photo/text of a schedule -> family calendar events | Surprise: gift ideas, occasions, budgets, hidden lists |
+| Product | FlyerCal: photo/text of a schedule -> family calendar events | Surprise: gift ideas, occasions, budgets, hidden lists |
 | Dev URL | http://localhost:3000 | http://localhost:3001 |
 
 ## Stack
