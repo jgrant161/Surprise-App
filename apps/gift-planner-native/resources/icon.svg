@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" rx="225.28" fill="#db2777"/>
+  <g fill="none" stroke="#fff" stroke-width="54" stroke-linejoin="round" stroke-linecap="round">
+    <!-- lid -->
+    <rect x="172" y="392" width="680" height="176" rx="28"/>
+    <!-- box body -->
+    <path d="M232 568v258a52 52 0 0 0 52 52h456a52 52 0 0 0 52-52V568"/>
+    <!-- vertical ribbon -->
+    <path d="M512 392v486"/>
+    <!-- bow loops -->
+    <path d="M512 392c-60-150-250-170-230-60 14 76 150 70 230 60z"/>
+    <path d="M512 392c60-150 250-170 230-60-14 76-150 70-230 60z"/>
+  </g>
+  <!-- bow knot -->
+  <circle cx="512" cy="392" r="40" fill="#fff"/>
+</svg>

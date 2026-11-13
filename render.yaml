@@ -1,4 +1,4 @@
-# Render Blueprint for the FlyerCal web app.
+# Render Blueprint for the FlyerCal web app and the Surprise Stash gift planner.
 # In Render: New -> Blueprint -> pick this repo. Fill in the sync:false secrets when prompted.
 services:
   - type: web
@@ -31,6 +31,52 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: DATABASE_URL            # libsql://<db>.turso.io
+        sync: false
+      - key: DATABASE_AUTH_TOKEN
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: REVIEW_EMAIL            # App Review demo login
+        sync: false
+      - key: REVIEW_CODE
+        sync: false
+      - key: REVENUECAT_WEBHOOK_SECRET
+        sync: false
+
+  # Second app: the Surprise Stash gift planner, its own service from the same blueprint.
+  - type: web
+    name: surprise-stash
+    runtime: node
+    plan: starter
+    region: ohio
+    rootDir: apps/gift-planner
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # No NODE_ENV here either (see the note on the first service).
+      - key: APP_URL
+        value: https://surprisestash.app
+      - key: SUPPORT_EMAIL
+        value: support@surprisestash.app
+      - key: EMAIL_FROM
+        value: "Surprise Stash <login@surprisestash.app>"
+      - key: FREE_RECIPIENTS
+        value: "4"
+      - key: FREE_CAPTURES_PER_MONTH
+        value: "5"
+      - key: PRO_PRICE_MONTHLY
+        value: "$2.99"
+      - key: PRO_PRICE_YEARLY
+        value: "$29.99"
+      - key: AMAZON_ASSOCIATES_TAG          # e.g. yourtag-20, once Amazon Associates approves
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: DATABASE_URL            # libsql://surprise-stash-prod-<org>.turso.io
         sync: false
       - key: DATABASE_AUTH_TOKEN
         sync: false
