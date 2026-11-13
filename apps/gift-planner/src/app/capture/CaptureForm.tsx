@@ -22,7 +22,11 @@ export function CaptureForm({ people }: { people: PersonOpt[] }) {
           placeholder="Mom said she wants a garden kneeler, and Jake keeps talking about the Lego Rivendell set."
         />
         <button className="btn-primary" disabled={pending}>{pending ? "Thinking…" : "Find the gift ideas"}</button>
-        {result && !result.ok && <p className="text-sm text-red-600">{result.error}</p>}
+        {result && !result.ok && (
+          <p className="text-sm text-red-600">
+            {result.error}{result.limitReached && <> <a href="/upgrade" className="underline">See Pro</a>.</>}
+          </p>
+        )}
       </form>
 
       {result && result.ok && (

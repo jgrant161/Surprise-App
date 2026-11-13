@@ -4,20 +4,22 @@ import { and, eq, isNull, isNotNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { people, ideas, occasions, budgets, IDEA_STATUSES, type IdeaStatus } from "@/db/schema";
-import { getHousehold } from "@/lib/household";
-import { requireViewer } from "@/lib/viewer";
+import { people, ideas, occasions, budgets, households, IDEA_STATUSES, type IdeaStatus } from "@/db/schema";
+import { requireMember } from "@/lib/auth";
 import { assertNotSelf, loadIdeaForViewer } from "@/lib/visibility";
 import { parseDollars } from "@/lib/money";
-import { parseIdeas } from "@/lib/claude";
+import { canAddPerson, canCapture } from "@/lib/plans";
+import { runCapture, type CaptureReviewItem } from "@/lib/capture";
+import { personHasUser, regenerateInviteCode } from "@/lib/households";
 import { listPeople } from "@/lib/queries";
 
 const str = (fd: FormData, key: string) => String(fd.get(key) ?? "").trim();
 const now = () => new Date().toISOString();
 
+/** The signed-in person ("viewer") and their household. Redirects when either is missing. */
 async function ctx() {
-  const [viewer, household] = await Promise.all([requireViewer(), getHousehold()]);
-  return { viewer, household };
+  const { person, household, role } = await requireMember();
+  return { viewer: person, household, role };
 }
 
 /* ---------- people ---------- */
@@ -26,14 +28,14 @@ export async function createPerson(fd: FormData) {
   const { household } = await ctx();
   const name = str(fd, "name");
   if (!name) return;
+  const allowance = await canAddPerson(household);
+  if (!allowance.ok) redirect("/upgrade?reason=people");
   const id = crypto.randomUUID();
-  const pin = str(fd, "pin");
   await db.insert(people).values({
     id,
     householdId: household.id,
     name,
-    isMember: fd.get("isMember") ? 1 : 0,
-    pin: /^\d{4}$/.test(pin) ? pin : null,
+    isMember: 0,
     birthday: normalizeBirthday(str(fd, "birthday")),
     interests: str(fd, "interests"),
     sizes: str(fd, "sizes"),
@@ -48,13 +50,10 @@ export async function createPerson(fd: FormData) {
 export async function updatePerson(fd: FormData) {
   const { household } = await ctx();
   const id = str(fd, "id");
-  const pin = str(fd, "pin");
   await db
     .update(people)
     .set({
       name: str(fd, "name") || undefined,
-      isMember: fd.get("isMember") ? 1 : 0,
-      pin: pin === "" ? null : /^\d{4}$/.test(pin) ? pin : undefined,
       birthday: normalizeBirthday(str(fd, "birthday")),
       interests: str(fd, "interests"),
       sizes: str(fd, "sizes"),
@@ -70,6 +69,7 @@ export async function deletePerson(fd: FormData) {
   const { viewer, household } = await ctx();
   const id = str(fd, "id");
   if (id === viewer.id) return; // can't delete yourself while signed in
+  if (await personHasUser(household.id, id)) return; // a signed-in member; they leave from Settings instead
   await db.delete(ideas).where(and(eq(ideas.forPersonId, id), eq(ideas.householdId, household.id)));
   await db.delete(budgets).where(and(eq(budgets.forPersonId, id), eq(budgets.householdId, household.id)));
   await db.delete(occasions).where(and(eq(occasions.forPersonId, id), eq(occasions.householdId, household.id)));
@@ -92,6 +92,8 @@ export async function createIdea(fd: FormData) {
   const title = str(fd, "title");
   if (!forPersonId || !title) return;
   assertNotSelf(viewer.id, forPersonId);
+  const target = await db.query.people.findFirst({ where: and(eq(people.id, forPersonId), eq(people.householdId, household.id)), columns: { id: true } });
+  if (!target) return;
   const url = str(fd, "url");
   await db.insert(ideas).values({
     id: crypto.randomUUID(),
@@ -154,45 +156,21 @@ export async function deleteIdea(fd: FormData) {
 
 /* ---------- capture ---------- */
 
-export type CaptureReviewItem = {
-  key: string;
-  title: string;
-  notes: string;
-  sourceQuote: string | null;
-  priceCents: number | null;
-  personId: string | null;
-};
+export type { CaptureReviewItem };
 
 export type CaptureResult =
   | { ok: true; text: string; demo: boolean; items: CaptureReviewItem[]; hiddenCount: number }
-  | { ok: false; error: string };
+  | { ok: false; error: string; limitReached?: boolean };
 
 export async function captureIdeas(_prev: CaptureResult | null, fd: FormData): Promise<CaptureResult> {
   const { viewer, household } = await ctx();
   const text = str(fd, "text");
   if (!text) return { ok: false, error: "Type or paste what someone said first." };
-  const roster = await listPeople(household.id);
+  const allowance = await canCapture(household);
+  if (!allowance.ok) return { ok: false, error: `You've used all ${allowance.limit} free captures this month.`, limitReached: true };
   try {
-    const result = await parseIdeas({
-      text,
-      people: roster.map((p) => ({ id: p.id, name: p.name, interests: p.interests })),
-    });
-    const byName = new Map(roster.map((p) => [p.name.toLowerCase(), p.id]));
-    let hiddenCount = 0;
-    const items: CaptureReviewItem[] = [];
-    for (const idea of result.ideas) {
-      const personId = idea.personName ? byName.get(idea.personName.toLowerCase()) ?? null : null;
-      if (personId === viewer.id) { hiddenCount++; continue; } // never show the viewer their own surprises
-      items.push({
-        key: crypto.randomUUID(),
-        title: idea.title,
-        notes: idea.notes ?? "",
-        sourceQuote: idea.sourceQuote,
-        priceCents: idea.estimatedPriceCents,
-        personId,
-      });
-    }
-    return { ok: true, text, demo: result.demo, items, hiddenCount };
+    const result = await runCapture({ household, viewer, text });
+    return { ok: true, ...result };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Something went wrong." };
   }
@@ -201,11 +179,12 @@ export async function captureIdeas(_prev: CaptureResult | null, fd: FormData): P
 export async function saveCapturedIdeas(fd: FormData) {
   const { viewer, household } = await ctx();
   const keys = fd.getAll("keep").map(String);
+  const roster = new Set((await listPeople(household.id)).map((p) => p.id));
   let saved = 0;
   for (const key of keys) {
     const title = str(fd, `title_${key}`);
     const forPersonId = str(fd, `person_${key}`);
-    if (!title || !forPersonId) continue;
+    if (!title || !forPersonId || !roster.has(forPersonId)) continue;
     if (forPersonId === viewer.id) continue; // silently drop, server-side guard
     await db.insert(ideas).values({
       id: crypto.randomUUID(),
@@ -328,4 +307,20 @@ export async function setBudget(fd: FormData) {
   revalidatePath("/");
 }
 
+/* ---------- household & account ---------- */
 
+export async function renameHousehold(fd: FormData) {
+  const { household } = await ctx();
+  const name = str(fd, "name").slice(0, 60);
+  if (!name) return;
+  await db.update(households).set({ name }).where(eq(households.id, household.id));
+  revalidatePath("/settings");
+  revalidatePath("/");
+}
+
+export async function regenerateInvite() {
+  const { household, role } = await ctx();
+  if (role !== "owner") return;
+  await regenerateInviteCode(household.id);
+  revalidatePath("/settings");
+}

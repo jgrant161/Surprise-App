@@ -11,7 +11,7 @@ export function Shell({ viewer, title, children, action }: { viewer: Person; tit
           <h1 className="truncate text-lg font-bold">{title}</h1>
           <div className="flex items-center gap-2">
             {action}
-            <Link href="/who" className="flex items-center gap-2 rounded-full border border-line bg-card py-1 pl-1 pr-3 text-xs font-medium text-muted hover:text-foreground" title="Switch user">
+            <Link href="/settings" className="flex items-center gap-2 rounded-full border border-line bg-card py-1 pl-1 pr-3 text-xs font-medium text-muted hover:text-foreground" title="Settings">
               <Avatar name={viewer.name} color={viewer.color} size={24} />
               {viewer.name}
             </Link>

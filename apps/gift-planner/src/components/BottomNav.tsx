@@ -8,13 +8,14 @@ const TABS = [
   { href: "/people", label: "People", icon: "☺" },
   { href: "/capture", label: "Capture", icon: "✎" },
   { href: "/occasions", label: "Occasions", icon: "✦" },
+  { href: "/settings", label: "Settings", icon: "⚙" },
 ] as const;
 
 export function BottomNav() {
   const path = usePathname();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-      <ul className="mx-auto grid max-w-2xl grid-cols-4">
+      <ul className="mx-auto grid max-w-2xl grid-cols-5">
         {TABS.map((t) => {
           const active = t.href === "/" ? path === "/" : path.startsWith(t.href);
           return (

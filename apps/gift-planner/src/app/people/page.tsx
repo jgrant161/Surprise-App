@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { requireViewer } from "@/lib/viewer";
-import { getHousehold } from "@/lib/household";
+import { requireMember } from "@/lib/auth";
 import { listPeople, listVisibleIdeas, pipelineFor } from "@/lib/queries";
 import { nextOccurrence, daysUntil, formatBirthday } from "@/lib/dates";
 import { Shell } from "@/components/Shell";
@@ -10,8 +9,7 @@ export const metadata = { title: "People" };
 
 export default async function PeoplePage({ searchParams }: PageProps<"/people">) {
   const sp = await searchParams;
-  const viewer = await requireViewer();
-  const household = await getHousehold();
+  const { person: viewer, household } = await requireMember();
   const [roster, visible] = await Promise.all([listPeople(household.id), listVisibleIdeas(viewer.id, household.id)]);
   const saved = typeof sp.saved === "string" ? Number(sp.saved) : null;
 

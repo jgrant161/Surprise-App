@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { requireViewer } from "@/lib/viewer";
-import { getHousehold } from "@/lib/household";
+import { requireMember } from "@/lib/auth";
 import { listOccasions, listPeople, personMap } from "@/lib/queries";
 import { nextOccurrence, daysUntil, formatDate, countdownLabel, parseISODate } from "@/lib/dates";
 import { createOccasion, createBirthdayOccasions } from "@/app/actions";
@@ -9,8 +8,7 @@ import { Shell } from "@/components/Shell";
 export const metadata = { title: "Occasions" };
 
 export default async function OccasionsPage() {
-  const viewer = await requireViewer();
-  const household = await getHousehold();
+  const { person: viewer, household } = await requireMember();
   const [list, roster] = await Promise.all([listOccasions(household.id), listPeople(household.id)]);
   const byId = personMap(roster);
   const rows = list

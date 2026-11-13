@@ -8,10 +8,10 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "Surprise", template: "%s · Surprise" },
-  description: "Gift ideas, occasions and budgets for the whole family, hidden from the person they're for.",
+  title: { default: "Surprise Stash", template: "%s · Surprise Stash" },
+  description: "The family gift list that keeps the secret. Capture ideas all year, split who buys what, and nobody ever sees their own.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Surprise", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Surprise Stash", statusBarStyle: "default" },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
 };
 
