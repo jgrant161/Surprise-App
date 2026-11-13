@@ -1,30 +1,54 @@
+import { eq } from "drizzle-orm";
 import { db } from "../src/db";
-import { households, people, occasions, ideas, budgets } from "../src/db/schema";
+import { households, householdUsers, people, occasions, ideas, budgets, users, captures } from "../src/db/schema";
+import { generateInviteCode } from "../src/lib/codes";
 
+/**
+ * Creates two demo accounts you can sign in with (dev mode shows the code on the login page):
+ *   demo@surprisestash.app -> "The Demo Household" as Mom (owner)
+ *   dad@surprisestash.app  -> same household as Dad (member)
+ * Recipients: Ava, Jake, Grandma Jo. For App Review set REVIEW_EMAIL / REVIEW_CODE instead.
+ */
 const now = new Date().toISOString();
 const uid = () => crypto.randomUUID();
 
+async function ensureUser(email: string) {
+  const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
+  if (existing) return existing;
+  const id = uid();
+  await db.insert(users).values({ id, email, createdAt: now });
+  return (await db.query.users.findFirst({ where: eq(users.id, id) }))!;
+}
+
 async function main() {
-  await db.delete(budgets);
-  await db.delete(ideas);
-  await db.delete(occasions);
-  await db.delete(people);
-  await db.delete(households);
+  const momUser = await ensureUser("demo@surprisestash.app");
+  const dadUser = await ensureUser("dad@surprisestash.app");
+  const seated = await db.query.householdUsers.findFirst({ where: eq(householdUsers.userId, momUser.id) });
+  if (seated) {
+    const hh = await db.query.households.findFirst({ where: eq(households.id, seated.householdId) });
+    console.log(`Demo user already in "${hh?.name}" (invite ${hh?.inviteCode}). Nothing to do.`);
+    return;
+  }
 
   const householdId = uid();
-  await db.insert(households).values({ id: householdId, name: "The Grants", createdAt: now });
+  const inviteCode = generateInviteCode();
+  await db.insert(households).values({ id: householdId, name: "The Demo Household", inviteCode, plan: "free", createdAt: now });
 
-  const mom = { id: uid(), name: "Mom", isMember: 1, pin: "1234", birthday: "1984-03-14", interests: "gardening, mystery novels, tea", sizes: "M tops, 8 shoes", notes: "", color: "#ec4899" };
-  const dad = { id: uid(), name: "Dad", isMember: 1, pin: "1234", birthday: "1982-08-02", interests: "grilling, chess, trading cards", sizes: "L tops, 11 shoes", notes: "", color: "#3b82f6" };
-  const ava = { id: uid(), name: "Ava", isMember: 0, pin: null, birthday: "2015-11-20", interests: "art supplies, horses, graphic novels", sizes: "Kids 10-12", notes: "", color: "#8b5cf6" };
-  const jake = { id: uid(), name: "Jake", isMember: 0, pin: null, birthday: "2013-01-09", interests: "LEGO, Pokémon cards, soccer", sizes: "Kids 14", notes: "Already has the Hogwarts castle", color: "#22c55e" };
-  const jo = { id: uid(), name: "Grandma Jo", isMember: 0, pin: null, birthday: "06-30", interests: "puzzles, birds, cozy socks", sizes: "", notes: "Lives alone, loves phone calls more than things", color: "#f59e0b" };
+  const mom = { id: uid(), name: "Mom", isMember: 1, birthday: "1984-03-14", interests: "gardening, mystery novels, tea", sizes: "M tops, 8 shoes", notes: "", color: "#ec4899" };
+  const dad = { id: uid(), name: "Dad", isMember: 1, birthday: "1982-08-02", interests: "grilling, chess, trading cards", sizes: "L tops, 11 shoes", notes: "", color: "#3b82f6" };
+  const ava = { id: uid(), name: "Ava", isMember: 0, birthday: "2015-11-20", interests: "art supplies, horses, graphic novels", sizes: "Kids 10-12", notes: "", color: "#8b5cf6" };
+  const jake = { id: uid(), name: "Jake", isMember: 0, birthday: "2013-01-09", interests: "LEGO, Pokémon cards, soccer", sizes: "Kids 14", notes: "Already has the Hogwarts castle", color: "#22c55e" };
+  const jo = { id: uid(), name: "Grandma Jo", isMember: 0, birthday: "06-30", interests: "puzzles, birds, cozy socks", sizes: "", notes: "Lives alone, loves phone calls more than things", color: "#f59e0b" };
   const all = [mom, dad, ava, jake, jo];
   await db.insert(people).values(all.map((p) => ({ ...p, householdId, createdAt: now })));
+  await db.insert(householdUsers).values([
+    { householdId, userId: momUser.id, personId: mom.id, role: "owner", createdAt: now },
+    { householdId, userId: dadUser.id, personId: dad.id, role: "member", createdAt: now },
+  ]);
 
   const year = new Date().getFullYear();
   const christmasId = uid();
-  const occRows = [
+  await db.insert(occasions).values([
     { id: christmasId, householdId, name: "Christmas", date: `${year}-12-25`, yearly: 1, forPersonId: null, createdAt: now },
     ...all.map((p) => ({
       id: uid(),
@@ -35,27 +59,12 @@ async function main() {
       forPersonId: p.id,
       createdAt: now,
     })),
-  ];
-  await db.insert(occasions).values(occRows);
+  ]);
 
   const idea = (forPersonId: string, addedBy: string, title: string, extra: Partial<typeof ideas.$inferInsert> = {}) => ({
-    id: uid(),
-    householdId,
-    forPersonId,
-    title,
-    url: null,
-    priceCents: null,
-    notes: "",
-    sourceQuote: null,
-    status: "idea" as const,
-    claimedByPersonId: null,
-    occasionId: null,
-    addedByPersonId: addedBy,
-    givenYear: null,
-    clicks: 0,
-    createdAt: now,
-    updatedAt: now,
-    ...extra,
+    id: uid(), householdId, forPersonId, title, url: null, priceCents: null, notes: "", sourceQuote: null,
+    status: "idea" as const, claimedByPersonId: null, occasionId: null, addedByPersonId: addedBy, givenYear: null, clicks: 0,
+    createdAt: now, updatedAt: now, ...extra,
   });
 
   await db.insert(ideas).values([
@@ -80,9 +89,11 @@ async function main() {
     { id: uid(), householdId, forPersonId: mom.id, occasionId: christmasId, amountCents: 20000 },
     { id: uid(), householdId, forPersonId: dad.id, occasionId: christmasId, amountCents: 20000 },
   ]);
+  void captures; // table exists; nothing to seed
 
-  console.log("Seeded household", householdId);
-  console.log("Members: Mom, Dad (PIN 1234). Recipients: Ava, Jake, Grandma Jo.");
+  console.log(`Seeded demo@surprisestash.app (Mom, owner) and dad@surprisestash.app (Dad) -> "The Demo Household". Invite code: ${inviteCode}`);
+  console.log("Recipients: Ava, Jake, Grandma Jo. Sign in on /login; dev mode shows the code.");
+  if (process.env.REVIEW_EMAIL && process.env.REVIEW_CODE) console.log(`Reviewer login: ${process.env.REVIEW_EMAIL} with code ${process.env.REVIEW_CODE}`);
 }
 
 main().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1); });

@@ -36,17 +36,11 @@ export function PersonFields({ person }: { person?: Person }) {
           ))}
         </div>
       </div>
-      <div className="card grid gap-2 bg-background">
-        <label className="flex items-center gap-2 text-sm font-medium">
-          <input type="checkbox" name="isMember" defaultChecked={person?.isMember === 1} className="h-4 w-4" />
-          Uses this app (can sign in and plan gifts for others)
-        </label>
-        <div>
-          <label className="label" htmlFor="pin">4-digit PIN (members only, optional)</label>
-          <input id="pin" name="pin" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} defaultValue={person?.pin ?? ""} className="input w-32" placeholder="1234" />
-          <p className="mt-1 text-xs text-muted">Keeps kids from opening a parent&apos;s view. Leave blank for none.</p>
-        </div>
-      </div>
+      {!person && (
+        <p className="text-xs text-muted">
+          Adding someone who should plan gifts too? Add them here, then share the invite code from Settings. When they sign in they pick their name and their own gifts are hidden from them.
+        </p>
+      )}
     </div>
   );
 }

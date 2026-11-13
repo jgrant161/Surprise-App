@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { requireViewer } from "@/lib/viewer";
-import { getHousehold } from "@/lib/household";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { Landing } from "@/components/Landing";
 import { listPeople, listOccasions, listVisibleIdeas, listVisibleBudgets, pipelineFor, spentFor, personMap } from "@/lib/queries";
 import { nextOccurrence, daysUntil, formatDate, countdownLabel } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
@@ -9,8 +10,11 @@ import { Avatar } from "@/components/Avatar";
 import { Empty } from "@/components/Empty";
 
 export default async function Dashboard() {
-  const viewer = await requireViewer();
-  const household = await getHousehold();
+  const session = await getSession();
+  if (!session) return <Landing />;
+  if (!session.household || !session.person) redirect("/welcome");
+  const viewer = session.person;
+  const household = session.household;
   const [roster, occasions, visibleIdeas, visibleBudgets] = await Promise.all([
     listPeople(household.id),
     listOccasions(household.id),
@@ -28,7 +32,7 @@ export default async function Dashboard() {
   const needsIdeas = roster.filter((p) => p.id !== viewer.id && pipelineFor(visibleIdeas, p.id).total === 0);
 
   return (
-    <Shell viewer={viewer} title="Surprise" action={<Link href="/capture" className="btn-primary btn-sm">+ Capture</Link>}>
+    <Shell viewer={viewer} title={household.name} action={<Link href="/capture" className="btn-primary btn-sm">+ Capture</Link>}>
       <section className="mb-6">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">Coming up</h2>
         {upcoming.length === 0 ? (

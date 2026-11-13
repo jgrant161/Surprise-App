@@ -80,6 +80,22 @@ database (`turso db create flyercal-staging`) and the same variables. Point
 the native shell at it with `FLYERCAL_URL=https://staging.flyercal.app npx cap sync`
 when testing a native build against unreleased web changes.
 
+## 4b. Deploying the second app (Surprise Stash)
+
+The gift planner (`apps/gift-planner`, deployed at `https://surprisestash.app`) ships the same
+way and is already the second service in `render.yaml`, named `surprise-stash`.
+
+1. **Turso**: `turso db create surprise-stash-prod`, then from `apps/gift-planner` run
+   `DATABASE_URL=libsql://... DATABASE_AUTH_TOKEN=... npm run db:push` (set `NODE_USE_ENV_PROXY=1`
+   first if you run it from a cloud session behind a proxy).
+2. **Render**: the Blueprint sync creates the `surprise-stash` service alongside `flyercal`; fill its
+   secrets when prompted (same list as FlyerCal plus `AMAZON_ASSOCIATES_TAG`). Starter plan,
+   `/api/health` health check, no `NODE_ENV`.
+3. **Resend**: add `surprisestash.app` as a second sending domain in the same Resend team (or
+   a new team), add its DNS records, verify. `EMAIL_FROM` is already `Surprise Stash <login@surprisestash.app>`.
+4. **CI** already lints, tests and builds this app on every push; nothing to add.
+5. Store steps: `docs/store/gift-planner/RELEASE_CHECKLIST.md`.
+
 ## 5. Rolling out a schema change
 
 Drizzle `push` is additive-safe for new tables and columns. Order of operations:

@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { ideas, IDEA_STATUSES, type Idea, type IdeaStatus } from "@/db/schema";
-import { requireViewer } from "@/lib/viewer";
-import { getHousehold } from "@/lib/household";
+import { requireMember } from "@/lib/auth";
 import { getPerson, listPeople, listOccasions, personMap } from "@/lib/queries";
 import { ideasVisibleTo, hideSelf, isSelf } from "@/lib/visibility";
 import { formatCents } from "@/lib/money";
@@ -18,8 +17,7 @@ import { PersonFields } from "@/components/PersonForm";
 
 export default async function PersonPage({ params }: PageProps<"/people/[id]">) {
   const { id } = await params;
-  const viewer = await requireViewer();
-  const household = await getHousehold();
+  const { person: viewer, household } = await requireMember();
   const person = await getPerson(household.id, id);
   if (!person) notFound();
 
@@ -78,10 +76,14 @@ export default async function PersonPage({ params }: PageProps<"/people/[id]">) 
           <PersonFields person={person} />
           <button className="btn-primary">Save</button>
         </form>
-        <form action={deletePerson} className="mt-3 border-t border-line pt-3">
-          <input type="hidden" name="id" value={person.id} />
-          <button className="btn-ghost btn-sm text-red-600">Remove {person.name} and all their ideas</button>
-        </form>
+        {person.isMember === 1 ? (
+          <p className="mt-3 border-t border-line pt-3 text-xs text-muted">{person.name} signs in to this household, so they can only be removed when they leave from their own Settings.</p>
+        ) : (
+          <form action={deletePerson} className="mt-3 border-t border-line pt-3">
+            <input type="hidden" name="id" value={person.id} />
+            <button className="btn-ghost btn-sm text-red-600">Remove {person.name} and all their ideas</button>
+          </form>
+        )}
       </details>
 
       <section className="mt-6">

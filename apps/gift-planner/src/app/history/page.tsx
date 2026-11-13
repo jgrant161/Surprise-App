@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { requireViewer } from "@/lib/viewer";
-import { getHousehold } from "@/lib/household";
+import { requireMember } from "@/lib/auth";
 import { listPeople, listVisibleIdeas, personMap } from "@/lib/queries";
 import { formatCents } from "@/lib/money";
 import { Shell } from "@/components/Shell";
@@ -11,8 +10,7 @@ import type { Idea } from "@/db/schema";
 export const metadata = { title: "History" };
 
 export default async function HistoryPage() {
-  const viewer = await requireViewer();
-  const household = await getHousehold();
+  const { person: viewer, household } = await requireMember();
   const [roster, visible] = await Promise.all([listPeople(household.id), listVisibleIdeas(viewer.id, household.id)]);
   const byId = personMap(roster);
   const given = visible.filter((i) => i.status === "given");

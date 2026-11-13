@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireViewer } from "@/lib/viewer";
-import { getHousehold } from "@/lib/household";
+import { requireMember } from "@/lib/auth";
 import { getOccasion, listPeople, listVisibleIdeas, listVisibleBudgets, pipelineFor, spentFor, personMap } from "@/lib/queries";
 import { nextOccurrence, daysUntil, formatDate, countdownLabel } from "@/lib/dates";
 import { formatCents, centsToDollarInput } from "@/lib/money";
@@ -12,8 +11,7 @@ import { StatusPill } from "@/components/StatusPill";
 
 export default async function OccasionPage({ params }: PageProps<"/occasions/[id]">) {
   const { id } = await params;
-  const viewer = await requireViewer();
-  const household = await getHousehold();
+  const { person: viewer, household } = await requireMember();
   const occasion = await getOccasion(household.id, id);
   if (!occasion) notFound();
   const [roster, visibleIdeas, visibleBudgets] = await Promise.all([
